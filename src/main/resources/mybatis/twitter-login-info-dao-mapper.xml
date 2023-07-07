@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sql.resources.twitterloginInfodao">
+	
+	<select id="selectExistTwitterId" parameterType="String" resultType="String">
+		SELECT EMAIL FROM TB_TWITTER_AUTH_TOKEN
+		WHERE 1=1
+		AND EMAIL = #{email}
+	</select>
+	
+	<select id="selectStatusFTwitterId" resultType="AuthToken">
+		SELECT EMAIL, USER_ID as userId , USER_PASSWORD as userPassword FROM TB_TWITTER_AUTH_TOKEN
+		WHERE 1=1
+		AND STATUS = 'F'
+	</select>
+	
+	<insert id="insertTwitterNewId" parameterType="AuthToken" >
+		INSERT INTO TB_TWITTER_AUTH_TOKEN
+		(EMAIL, USER_ID , USER_PASSWORD, TOKEN, COOKIE, USE_UID , CREATE_DATE, USE_DATE, STATUS)
+		VALUES (
+			#{email},
+			#{userId},
+			#{userPassword},
+			#{token},
+			#{cookie},
+			null,
+			sysdate,
+			sysdate,
+			'T'
+		)
+	</insert>
+	
+	<update id="updateTwitterAuthData" parameterType="AuthToken">
+		UPDATE TB_TWITTER_AUTH_TOKEN
+		SET TOKEN = #{token},
+		COOKIE = #{cookie},
+		USE_DATE = sysdate, 
+		STATUS = 'T'
+		WHERE 1=1 
+		AND EMAIL = #{email}
+	</update>
+</mapper>
