@@ -45,6 +45,7 @@ public class TwitterLoginInfoManager {
 	
 	public static void main(String[] args) {
 		TwitterLoginInfoManager manger = new TwitterLoginInfoManager();
+//		manger.abort();
 //		manger.init();
 //		manger.selectTrsfAndCookie(id, password)
 //		manger.insertNewTwitterId();
@@ -75,9 +76,9 @@ public class TwitterLoginInfoManager {
 				options.addArguments("--disable-blink-features=AutomationControlled"); // 자동화 컨트롤이 가능 비활성화
 				options.setExperimentalOption("useAutomationExtension", false); // 자동화 확장프로그램 비활성화
 				options.setExperimentalOption("excludeSwitches", Collections.singletonList("enable-automation")); //enable-automation스위치를 제외하고 실행합니다.
-		        options.addArguments("--remote-debugging-address=127.0.0.1");
-		        options.addArguments("--remote-debugging-port=9222");
-//		        options.addArguments("Sec-Fetch-Site=same-origin");
+//		        options.addArguments("--remote-debugging-address=127.0.0.1"); -> 문제발생 (23.07.10) 
+//		        options.addArguments("--remote-debugging-port=9222"); -> 문제발생 (23.07.10)
+		        options.addArguments("Sec-Fetch-Site=same-origin");
 		        options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36");
 		        
 										        
@@ -95,6 +96,7 @@ public class TwitterLoginInfoManager {
 				
 				try {
 					this.driver = new ChromeDriver(options);
+//					this.driver = new ChromeDriver();
 				} catch (Exception e) {
 					logger.error(TWITTER_LOGIN_INFO_MANAGER + ", driver new ChromeDriver(options Error");
 					e.printStackTrace();
@@ -239,35 +241,43 @@ public class TwitterLoginInfoManager {
 		try {
 			String loginUrl = "https://twitter.com/i/flow/login";
 			
-			if(driver == null) {
-				init();
+				if(driver == null) {
+					init();
+				}
+			
+			try {
+				/* login page 이동*/
+				logger.info(TWITTER_LOGIN_INFO_MANAGER + ", driver get login start");
+				driver.get(loginUrl);
+				driver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
+				logger.info(TWITTER_LOGIN_INFO_MANAGER + ", driver get login end");
+//				ThreadUtil.sleepSec(3);
+			
+				/* id 입력 */
+				logger.info(TWITTER_LOGIN_INFO_MANAGER + ", idInput start, id : " + id);
+				String idXpath ="/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[5]/label/div/div[2]/div/input";
+				WebElement idInput = driver.findElement(By.xpath(idXpath));
+				idInput.sendKeys(id);
+				logger.info(TWITTER_LOGIN_INFO_MANAGER + ", idInput start end");	
+//				ThreadUtil.sleepSec(3);
+			} catch (Exception e) {
+				e.printStackTrace();
+				return null;
 			}
+
 			
-			/* login page 이동*/
-			logger.info(TWITTER_LOGIN_INFO_MANAGER + ", driver get login start");
-			driver.get(loginUrl);
-			driver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
-			logger.info(TWITTER_LOGIN_INFO_MANAGER + ", driver get login end");
-//			ThreadUtil.sleepSec(3);
-		
-			/* id 입력 */
-			logger.info(TWITTER_LOGIN_INFO_MANAGER + ", idInput start, id : " + id);
-			String idXpath ="/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[5]/label/div/div[2]/div/input";
-			WebElement idInput = driver.findElement(By.xpath(idXpath));
-			idInput.sendKeys(id);
-			logger.info(TWITTER_LOGIN_INFO_MANAGER + ", idInput start end");	
-//			ThreadUtil.sleepSec(3);
-			
-			/* id 입력 후 클릭 */
-			String idLoginInputXpath ="/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[6]";
-			WebElement idLoginInput = driver.findElement(By.xpath(idLoginInputXpath));
-			idLoginInput.click();
-			logger.info(TWITTER_LOGIN_INFO_MANAGER + ", idLoginInput Click");		
-			driver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
-//			ThreadUtil.sleepSec(3);
+
 			
 			/* password 입력*/
-			try {				
+			try {	
+				/* id 입력 후 클릭 */
+				String idLoginInputXpath ="/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[6]";
+				WebElement idLoginInput = driver.findElement(By.xpath(idLoginInputXpath));
+				idLoginInput.click();
+				logger.info(TWITTER_LOGIN_INFO_MANAGER + ", idLoginInput Click");		
+				driver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
+//				ThreadUtil.sleepSec(3);
+				
 				logger.info(TWITTER_LOGIN_INFO_MANAGER + ", pwInput start, password : " + password);
 				String pwXpath ="/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[1]/div/div/div[3]/div/label/div/div[2]/div[1]/input";
 				WebElement pwInput = driver.findElement(By.xpath(pwXpath));
@@ -322,23 +332,26 @@ public class TwitterLoginInfoManager {
 //			        actions.moveByOffset(x,y).click();
 //					unLockInput.click();
 					ThreadUtil.sleepSec(5);
-					if(!driver.getCurrentUrl().equals("https://twitter.com/home?lang=en")) {
-						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", Page is not https://twitter.com/home ");
-						return null;
-					} else if (driver.getCurrentUrl().equals("https://twitter.com/account/access?lang=en")) {
+					
+					if (driver.getCurrentUrl().equals("https://twitter.com/account/access?lang=en")) { // start Click -> Continue to Twitter
 						String unLockInputXpath2 ="/html/body/div[2]/div/form/input[6]";
-						WebElement unLockInput2 = driver.findElement(By.xpath(unLockInputXpath));
-				        System.out.println("X : " + x );
-				        System.out.println("y : " + y );
-				        actions.moveToElement(unLockInput).perform();
+						WebElement unLockInput2 = driver.findElement(By.xpath(unLockInputXpath2));
+				        int x2 = unLockInput2.getLocation().getX();
+				        int y2 = unLockInput2.getLocation().getY();
+				        System.out.println("x2: " + x2 );
+				        System.out.println("y2 : " + y2 );
+				        actions.moveToElement(unLockInput2).perform();
 				        ThreadUtil.sleepSec(5);
 				        actions.click().perform();
 				        ThreadUtil.sleepSec(5);
+				        logger.info(TWITTER_LOGIN_INFO_MANAGER + ", Activate Id Access Continue Botton Click");
+				        ThreadUtil.sleepSec(5);
 				        
-				        if(!driver.getCurrentUrl().equals("https://twitter.com/home?lang=en")) {
-							logger.info(TWITTER_LOGIN_INFO_MANAGER + ", Page is not https://twitter.com/home ");
+						if(!driver.getCurrentUrl().equals("https://twitter.com/home?lang=en")) {
+							logger.info(TWITTER_LOGIN_INFO_MANAGER + ", Activate Id Access fail, CAPTHCA Check!!");
 							return null;
-				        }
+						}
+				        
 					}
 				} catch (ElementNotVisibleException e) {
 					logger.info(TWITTER_LOGIN_INFO_MANAGER + ", CAPTCHA Login PASS or unLockInput Xpatgh Change");
