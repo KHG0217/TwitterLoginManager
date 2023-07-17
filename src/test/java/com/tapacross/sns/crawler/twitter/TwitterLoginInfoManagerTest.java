@@ -14,9 +14,12 @@ public class TwitterLoginInfoManagerTest {
 	@Test
 	public void testSelectTrsfAndCookie() {
 		TwitterLoginInfoManager manger = new TwitterLoginInfoManager();
-		String id = "tapa23070458297";
+		String id = "cuckoo05530671";
 		String password = "tapaman1234";
-		Map<String,String> loginInfo = manger.selectTrsfAndCookie(id, password);		
+		String email ="cuckoo055@ruu.kr";
+		String proxyIp ="49.254.132.223";
+		int port = 5407;
+		Map<String,String> loginInfo = manger.selectTrsfAndCookie(id, password, email, proxyIp, port);		
 		System.out.println("loginInfo : " + loginInfo);
 	}
 }

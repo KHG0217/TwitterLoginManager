@@ -3,11 +3,14 @@ package com.tapacross.sns.crawler.twitter;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -30,6 +33,7 @@ import org.springframework.jdbc.CannotGetJdbcConnectionException;
 
 import com.tapacross.sns.crawler.twitter.service.TwitterLoginInfoService;
 import com.tapacross.sns.entity.TBTwitterAuthToken;
+import com.tapacross.sns.util.FileUtil;
 import com.tapacross.sns.util.ThreadUtil;
 
 
@@ -42,16 +46,54 @@ public class TwitterLoginInfoManager {
 	private TwitterLoginInfoService service;
 	private static int insertCount = 0;
 	private static int insertFailCount = 0;
+	private static List<String> proxyIpList = new ArrayList<>();
+	private static int ProxyIpListindex = 0;
+	private static int ProxyIpListSize = 0;
+	
+	 private final int MAX_RETRY = 5; // 최대 재시도 횟수 https://twitter.com/account/access?lang=en
 	
 	public static void main(String[] args) {
 		TwitterLoginInfoManager manger = new TwitterLoginInfoManager();
+		String proxyPath ="target/classes/data/haiip.txt";
 //		manger.abort();
 //		manger.init();
 //		manger.selectTrsfAndCookie(id, password)
-//		manger.insertNewTwitterId();
-//		System.out.println("insertCount : " + insertCount);
-//		System.out.println("insertFailCount : " + insertFailCount);
-		manger.updateTwitterAuthData();
+		
+		try {
+			String lines = FileUtil.readFromFile(proxyPath, "\r\n");
+			String[] splitStrings = lines.split("\r\n");
+			
+			for (String splitString : splitStrings ) {
+				proxyIpList.add(splitString);
+			}
+						
+			ProxyIpListSize = proxyIpList.size() - 1;		
+			Random random = new Random();
+			ProxyIpListindex = random.nextInt(proxyIpList.size() -1);
+			Map.Entry<String, Integer> proxyIpInfo = manger.distinguishIpAndProt(ProxyIpListindex);
+			String proxyIp = proxyIpInfo.getKey();
+			int port = proxyIpInfo.getValue();
+			
+			manger.updateTwitterAuthData(proxyIp, port);
+//			manger.insertNewTwitterId(proxyIp,port);
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println("insertCount : " + insertCount);
+		System.out.println("insertFailCount : " + insertFailCount);
+
+	}
+	
+	public Map.Entry<String, Integer> distinguishIpAndProt(int proxyIpListIndex) {
+		String[] ipAddress = proxyIpList.get(proxyIpListIndex).split(":");
+		String proxyIp = ipAddress[0];
+		int port = Integer.parseInt(ipAddress[1]);		
+		
+		Random random = new Random();
+		ProxyIpListindex = random.nextInt(proxyIpList.size() -1);
+		return new AbstractMap.SimpleEntry<>(proxyIp, port);
 	}
 	
 	private void initSpringBeans() {
@@ -61,13 +103,13 @@ public class TwitterLoginInfoManager {
 		this.service = context.getBean(TwitterLoginInfoService.class);		
 	}
 	
-	private void init () {
+	private void init (String proxyIp, int port) {
 		try {
 			this.driver = null;
 			if(this.driver == null) {
 				ChromeOptions options = new ChromeOptions();
 		        options.addArguments("--headless"); // 크롬창 숨기기, javascript가 감지가능 
-//		        options.addArguments("--incognito");
+		        options.addArguments("--incognito"); // 크롬 씨크릿모드
 //		        options.addArguments("--disable-cache");
 //		        options.addArguments("--disable-cookies");
 				options.addArguments("disable-infobars");// 크롬브라우저 정보 바 비활성
@@ -76,18 +118,15 @@ public class TwitterLoginInfoManager {
 				options.addArguments("--disable-blink-features=AutomationControlled"); // 자동화 컨트롤이 가능 비활성화
 				options.setExperimentalOption("useAutomationExtension", false); // 자동화 확장프로그램 비활성화
 				options.setExperimentalOption("excludeSwitches", Collections.singletonList("enable-automation")); //enable-automation스위치를 제외하고 실행합니다.
-//		        options.addArguments("--remote-debugging-address=127.0.0.1"); -> 문제발생 (23.07.10) 
-//		        options.addArguments("--remote-debugging-port=9222"); -> 문제발생 (23.07.10)
+//		        options.addArguments("--remote-debugging-address=127.0.0.1"); // -> 문제발생 (23.07.10) 
+//		        options.addArguments("--remote-debugging-port=9222"); // -> 문제발생 (23.07.10)
 		        options.addArguments("Sec-Fetch-Site=same-origin");
 		        options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36");
-		        
-										        
-		        String proxyHost = "121.126.129.148";
-		        int proxyPort = 5252;
+		        										        
 		        Proxy proxy = new Proxy();
-		        proxy.setHttpProxy(proxyHost + ":" + proxyPort);
-		        proxy.setSslProxy(proxyHost + ":" + proxyPort);
-		        options.addArguments("--proxy-server=http://" + proxyHost + ":" + proxyPort);
+		        proxy.setHttpProxy(proxyIp + ":" + port);
+		        proxy.setSslProxy(proxyIp + ":" + port);
+		        options.addArguments("--proxy-server=http://" + proxyIp + ":" + port);
 		        
 				logger.info(TWITTER_LOGIN_INFO_MANAGER + ", driver init start");
 				String WEB_DRIVER_ID = "webdriver.chrome.driver"; // 드라이버 ID
@@ -120,18 +159,25 @@ public class TwitterLoginInfoManager {
 	}
 	
 	private void abort () {
+		logger.info(TWITTER_LOGIN_INFO_MANAGER + ", abort Start");
 		if (driver != null) {
+			logger.info(TWITTER_LOGIN_INFO_MANAGER + ", driver NOT NULL");
 			driver.close();
+			logger.info(TWITTER_LOGIN_INFO_MANAGER + ", driver CLOSE");
 			driver.quit();
+			logger.info(TWITTER_LOGIN_INFO_MANAGER + ", driver QUIT");
 			driver = null;
+			logger.info(TWITTER_LOGIN_INFO_MANAGER + ", driver NULL");
+		} else {
+			logger.info(TWITTER_LOGIN_INFO_MANAGER + ", driver NULL");
 		}
-
+		logger.info(TWITTER_LOGIN_INFO_MANAGER + ", abort End");
 	}
 	
 	/**
 	 *  Lock log 찾기 insert fail Lock email
 	 */
-	public void insertNewTwitterId() {
+	public void insertNewTwitterId(String proxyIp, int port) {
 		try {
 			ApplicationContext context = new GenericXmlApplicationContext(
 					"classpath:spring/application-context.xml");
@@ -163,7 +209,7 @@ public class TwitterLoginInfoManager {
             	String id = splitStrings[1];
             	String password = splitStrings[2];
             	
-            	Map<String,String> loginInfo = selectTrsfAndCookie(id, password);
+            	Map<String,String> loginInfo = selectTrsfAndCookie(id, password, email, proxyIp, port);
             	
             	if(loginInfo == null) {
             		logger.error(TWITTER_LOGIN_INFO_MANAGER + ", loginInfo is null Pass");
@@ -194,7 +240,7 @@ public class TwitterLoginInfoManager {
 		}		
 	}
 	
-	public void updateTwitterAuthData() {
+	public void updateTwitterAuthData(String proxyIp, int port) {
 		initSpringBeans();		
 		try {
 			List<TBTwitterAuthToken> statusFList = new ArrayList<TBTwitterAuthToken>();
@@ -207,10 +253,19 @@ public class TwitterLoginInfoManager {
 			for(TBTwitterAuthToken data : statusFList) {
 				String id = data.userId;
 				String password = data.userPassword;
-				Map<String,String> loginInfo = selectTrsfAndCookie(id,password);
+				String email = data.email;
+				System.out.println("proxyIp : " + proxyIp);
+				System.out.println("port : " + port);
+				Map<String,String> loginInfo = selectTrsfAndCookie(id,password,email,proxyIp,port);
 				
 				if(loginInfo == null) {
 					logger.error(TWITTER_LOGIN_INFO_MANAGER + ", loginInfo is null Pass");
+					Map.Entry<String, Integer> proxyIpInfo = distinguishIpAndProt(ProxyIpListindex);
+					proxyIp = proxyIpInfo.getKey();
+					port = proxyIpInfo.getValue();
+					
+					System.out.println("Change proxyIp : " + proxyIp);
+					System.out.println("Change port : " + port);
 					continue;
 				}else {
 					TBTwitterAuthToken entity = new TBTwitterAuthToken();
@@ -236,39 +291,48 @@ public class TwitterLoginInfoManager {
 				
 	}
 	
-	public Map<String, String> selectTrsfAndCookie(String id, String password){
+	public Map<String, String> selectTrsfAndCookie(String id, String password, String email, String proxyIP, int port){
 		Map<String, String> loginInfo = new HashMap<>();
 		try {
 			String loginUrl = "https://twitter.com/i/flow/login";
 			
 				if(driver == null) {
-					init();
+					init(proxyIP,port);
 				}
+				
+			/* Connect Page */	
+			boolean isConnected = false;
+			int retryCount = 1;
 			
-			try {
-				/* login page 이동*/
-				logger.info(TWITTER_LOGIN_INFO_MANAGER + ", driver get login start");
-				driver.get(loginUrl);
-				driver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
-				logger.info(TWITTER_LOGIN_INFO_MANAGER + ", driver get login end");
-//				ThreadUtil.sleepSec(3);
-			
-				/* id 입력 */
-				logger.info(TWITTER_LOGIN_INFO_MANAGER + ", idInput start, id : " + id);
-				String idXpath ="/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[5]/label/div/div[2]/div/input";
-				WebElement idInput = driver.findElement(By.xpath(idXpath));
-				idInput.sendKeys(id);
-				logger.info(TWITTER_LOGIN_INFO_MANAGER + ", idInput start end");	
-//				ThreadUtil.sleepSec(3);
-			} catch (Exception e) {
-				e.printStackTrace();
-				return null;
+			while(!isConnected) {			
+				try {				
+					if(retryCount > MAX_RETRY) {
+						logger.error(TWITTER_LOGIN_INFO_MANAGER + ", Conenction Fail OR IdInputXpath fail Return null");
+						return null;					
+					}
+					/* login page 이동*/
+					logger.info(TWITTER_LOGIN_INFO_MANAGER + ", driver get login start");
+					driver.get(loginUrl);
+					driver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
+					logger.info(TWITTER_LOGIN_INFO_MANAGER + ", driver get login end");
+					
+					logger.info(TWITTER_LOGIN_INFO_MANAGER + ", idInput start, id : " + id);
+					String idXpath ="/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[5]/label/div/div[2]/div/input";
+					WebElement idInput = driver.findElement(By.xpath(idXpath)); // 프록시 사용으로 연결 실패시, 해당 엘리멘트를 찾지못하는 경우 발생 
+					idInput.sendKeys(id);
+					logger.info(TWITTER_LOGIN_INFO_MANAGER + ", idInput start end");
+					isConnected = true;
+//					ThreadUtil.sleepSec(3);
+				}
+				catch (Exception e) {
+						e.printStackTrace();
+						logger.error(TWITTER_LOGIN_INFO_MANAGER + ", Twitter LoginPage Connection Error CheckIdXpath or Check URL : " + loginUrl);	
+						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", LoginPage RETRY... ");
+						retryCount++;
+						
+				}
 			}
-
 			
-
-			
-			/* password 입력*/
 			try {	
 				/* id 입력 후 클릭 */
 				String idLoginInputXpath ="/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[6]";
@@ -299,6 +363,30 @@ public class TwitterLoginInfoManager {
 			driver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
 			ThreadUtil.sleepSec(3);
 			
+			/* email 추가인증 요구시 */
+			if(driver.getCurrentUrl().equals("https://twitter.com/i/flow/login")) {
+				
+				try {
+					logger.info(TWITTER_LOGIN_INFO_MANAGER + ", email input start, email : " + email);
+					String emailXpath ="/html/body/div[1]/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[1]/div/div[2]/label/div/div[2]/div/input";
+					WebElement emailInput = driver.findElement(By.xpath(emailXpath));
+					emailInput.sendKeys(email);
+					logger.info(TWITTER_LOGIN_INFO_MANAGER + ", email input end");
+					
+					String emailLoginXpath ="/html/body/div[1]/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[2]/div/div/div/div/div";
+					WebElement emailLoginInput = driver.findElement(By.xpath(emailLoginXpath));
+					emailLoginInput.click();
+					logger.info(TWITTER_LOGIN_INFO_MANAGER + ", emailInput Click");		
+					driver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
+					ThreadUtil.sleepSec(5);
+				} catch (Exception e) {
+					e.printStackTrace();
+					logger.error(TWITTER_LOGIN_INFO_MANAGER + ", email Activate Error :" + email);
+					return null;
+				}
+
+			}
+						
 //	        int waitTimeInSeconds = 15;	        
 //	        WebDriverWait wait = new WebDriverWait(driver, waitTimeInSeconds);
 //
@@ -317,7 +405,7 @@ public class TwitterLoginInfoManager {
 			        Actions actions = new Actions(driver);
 
 			        // 마우스를 (x, y) 위치로 이동
-			        ThreadUtil.sleepSec(3);
+			        ThreadUtil.sleepSec(7);
 					String unLockInputXpath ="/html/body/div[2]/div/form/input[6]";
 					WebElement unLockInput = driver.findElement(By.xpath(unLockInputXpath));
 			        int x = unLockInput.getLocation().getX();
@@ -328,6 +416,12 @@ public class TwitterLoginInfoManager {
 			        actions.moveToElement(unLockInput).perform();
 			        ThreadUtil.sleepSec(5);
 			        actions.click().perform();
+			        
+			        if(x == 0 && y == 0) {
+			        	System.out.println("캡챠라고 임시 판단 null 처리");
+			        	return null;
+			        }
+			        
 //			        actions.doubleClick(unLockInput).perform();
 //			        actions.moveByOffset(x,y).click();
 //					unLockInput.click();
@@ -346,13 +440,15 @@ public class TwitterLoginInfoManager {
 				        ThreadUtil.sleepSec(5);
 				        logger.info(TWITTER_LOGIN_INFO_MANAGER + ", Activate Id Access Continue Botton Click");
 				        ThreadUtil.sleepSec(5);
-				        
-						if(!driver.getCurrentUrl().equals("https://twitter.com/home?lang=en")) {
-							logger.info(TWITTER_LOGIN_INFO_MANAGER + ", Activate Id Access fail, CAPTHCA Check!!");
-							return null;
-						}
-				        
+				        				        
 					}
+					
+					/* home화면 나오지 않을시 실패로 판단 */
+					if(!driver.getCurrentUrl().contains("https://twitter.com/home?")) {
+						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", Activate Id Access fail, CAPTHCA Check!!");
+						return null;
+					} 
+					
 				} catch (ElementNotVisibleException e) {
 					logger.info(TWITTER_LOGIN_INFO_MANAGER + ", CAPTCHA Login PASS or unLockInput Xpatgh Change");
 					return null;
