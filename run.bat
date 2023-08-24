@@ -1,1 +1,0 @@
-java -cp target\naver-private-cafe-crawler-3.0.jar -Xms300m -Xmx300m com.tapacross.sns.crawler.cafe.collector.NaverPrivateCafeCrawlerApp

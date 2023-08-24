@@ -65,39 +65,49 @@ public class TwitterLoginInfoManager {
 	 private final int MAX_RETRY = 5; // 최대 재시도 횟수 https://twitter.com/account/access?lang=en
 	
 	 /*
+	  * 트위터 계정을 새로 추가하거나 업데이트한다.
+	  * 해당 로그는 이클립스안에 내장된 기능을 활용하여 콘솔에 출력된 로그를 남긴다.
+	  * 로그파일명 : twitter_insert_update_log.txt
+	  * (경로 C:\home\twitter)
 	  * type = 1 : insert
 	  * type = 2 : update
+	  * 
+	  * 현재 프록시는 사용하지 않는다.
 	  * */
 	public static void main(String[] args) {		
 		TwitterLoginInfoManager manger = new TwitterLoginInfoManager();
 		String proxyPath ="target/classes/data/haiip.txt";			
 		try {
-
-			System.out.println("type select,  1: insert, 2: update, :");
-			Scanner scanner = new Scanner(System.in);	
-			int number = scanner.nextInt(); // 정수를 읽음
-			scanner.close();
-			
-			String lines = FileUtil.readFromFile(proxyPath, "\r\n");
-			String[] splitStrings = lines.split("\r\n");
-			
-			for (String splitString : splitStrings ) {
-				proxyIpList.add(splitString);
+			if(args.length != 1) {
+				System.out.println("args error, put args 1 or 2, 1: insert, 2: update");
+				System.exit(-1);
 			}
+			
+//			System.out.println("type select, 1: insert, 2: update, :");
+//			Scanner scanner = new Scanner(System.in);	
+			int number = Integer.parseInt(args[0]);
+//			scanner.close();
+			
+//			String lines = FileUtil.readFromFile(proxyPath, "\r\n");
+//			String[] splitStrings = lines.split("\r\n");
+//			
+//			for (String splitString : splitStrings ) {
+//				proxyIpList.add(splitString);
+//			}
 						
-			ProxyIpListSize = proxyIpList.size() - 1;		
-			Random random = new Random();
-			ProxyIpListindex = random.nextInt(proxyIpList.size() -1);
-			Map.Entry<String, Integer> proxyIpInfo = manger.distinguishIpAndProt(ProxyIpListindex);
-			String proxyIp = proxyIpInfo.getKey();
-			int port = proxyIpInfo.getValue();
+//			ProxyIpListSize = proxyIpList.size() - 1;		
+//			Random random = new Random();
+//			ProxyIpListindex = random.nextInt(proxyIpList.size() -1);
+//			Map.Entry<String, Integer> proxyIpInfo = manger.distinguishIpAndProt(ProxyIpListindex);
+//			String proxyIp = proxyIpInfo.getKey();
+//			int port = proxyIpInfo.getValue();
 				
 			String date = manger.currentDate();
 			switch (number) {
 			case 1:   
 				System.out.println("----------------INSERT START---------------------------------");
 				System.out.println("----------------CURRENT DATE: " + date + "-------------");		
-				manger.insertNewTwitterId(proxyIp,port);
+				manger.insertNewTwitterId(null,0);
 				System.out.println("----------------INSERT END---------------------------------");
 				System.out.println("insertCount : " + insertCount);
 				System.out.println("insertFailCount : " + insertFailCount);
@@ -110,7 +120,7 @@ public class TwitterLoginInfoManager {
 			case 2:
 				System.out.println("----------------UPDATE START---------------------------------");
 				System.out.println("----------------CURRENT DATE: " + date + "-------------");				
-				manger.updateTwitterAuthData(proxyIp, port); // 상태값 C값으로 찾아서 업데이트 - test중
+				manger.updateTwitterAuthData(null, 0);
 				System.out.println("----------------UPDATE END---------------------------------");
 				System.out.println("updateCount : " + updateCount);
 				System.out.println("updateFailCount : " + updateFailCount);
@@ -120,21 +130,20 @@ public class TwitterLoginInfoManager {
 				break;
 				
 			default:
-				System.out.println("arg is 1 or 2...or SYSTEM EXIT...");
+				System.out.println("arg is 1 or 2...SYSTEM EXIT...");
 				System.exit(1);
 				break;
 			}
-
-
 			
-		} catch (IOException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-
 	}
 	
+	/*
+	 * 현재시간을 반환하는 메소드
+	 * */
 	public String currentDate() {
 		String date = null;
         LocalDateTime currentTime = LocalDateTime.now();
@@ -144,6 +153,10 @@ public class TwitterLoginInfoManager {
         return date;
 	}
 	
+	/*
+	 * proxyIpList에 등록된 ip:port를 읽어, 분리한후 반환한다.
+	 * 
+	 * */
 	public Map.Entry<String, Integer> distinguishIpAndProt(int proxyIpListIndex) {
 		String[] ipAddress = proxyIpList.get(proxyIpListIndex).split(":");
 		String proxyIp = ipAddress[0];
@@ -161,7 +174,6 @@ public class TwitterLoginInfoManager {
 		this.service = context.getBean(TwitterLoginInfoService.class);		
 	}
 
-	/*현재 proxy 사용 x */
 	private void init (String proxyIp, int port) {
 		try {
 			this.driver = null;
@@ -197,7 +209,6 @@ public class TwitterLoginInfoManager {
 				
 				try {
 					this.driver = new ChromeDriver(options);
-//					this.driver = new ChromeDriver();
 				} catch (Exception e) {
 					logger.error(TWITTER_LOGIN_INFO_MANAGER + ", driver new ChromeDriver(options Error");
 					e.printStackTrace();
@@ -306,9 +317,12 @@ public class TwitterLoginInfoManager {
 		logger.info(TWITTER_LOGIN_INFO_MANAGER + ", abort End");
 	}
 	
-	/**
-	 *  Lock log 찾기 insert fail Lock email
-	 */
+
+	/*
+	 * twitter new id list를 읽어 로그인후, 쿠키와 토큰값을 찾아 DB에 등록한다.
+	 * 구분값 : 탭
+	 * 형식 : 이메일	트위터ID	비밀번호
+	 * */
 	public void insertNewTwitterId(String proxyIp, int port) {
 		try {
 			ApplicationContext context = new GenericXmlApplicationContext(
@@ -378,6 +392,11 @@ public class TwitterLoginInfoManager {
 		}		
 	}
 	
+	/*
+	 * 트위터 block된 id를 수동으로 해제후 활성화 시킨다.
+	 * 현재 block 계정 업데이트하는 STATUS 값 : C
+	 *  
+	 * */
 	public void updateTwitterAuthData(String proxyIp, int port) {
 		initSpringBeans();		
 		try {
@@ -432,6 +451,9 @@ public class TwitterLoginInfoManager {
 				
 	}
 	
+	/*
+	 * 아이디와 비밀번호를 받아 로그인한후 토큰값과 쿠키값을 반환한다.
+	 * */
 	public Map<String, String> selectTrsfAndCookie(String id, String password, String email, String proxyIP, int port){
 		Map<String, String> loginInfo = new HashMap<>();
 		try {
@@ -588,7 +610,7 @@ public class TwitterLoginInfoManager {
 			        actions.click().perform();
 			        
 			        if(x == 0 && y == 0) {
-			        	System.out.println("캡챠라고 임시 판단 null 처리");
+			        	System.out.println("Activate Id Access fail, CAPTHCA Check!!");
 			        	return null;
 			        }
 					

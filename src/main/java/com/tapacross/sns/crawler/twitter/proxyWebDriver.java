@@ -44,6 +44,7 @@ public class proxyWebDriver {
 			String proxyIp = proxyIpInfo.getKey();
 			int port = proxyIpInfo.getValue();
 			
+			System.out.println(proxyIp+":"+port);
 			pwdClass.initDriver(proxyIp, port);
 			
 		} catch (IOException e) {
@@ -63,8 +64,8 @@ public class proxyWebDriver {
 //		        options.addArguments("--use-fake-ui-for-media-stream");
 //		        options.addArguments("--use-fake-device-for-media-stream");
 		        options.addArguments("--incognito"); // 크롬 씨크릿모드
-//		        options.addArguments("--disable-cache");
-//		        options.addArguments("--disable-cookies");
+		        options.addArguments("--disable-cache");
+		        options.addArguments("--disable-cookies");
 				options.addArguments("disable-infobars");// 크롬브라우저 정보 바 비활성
 				options.addArguments("--no-sandbox"); // 샌드박스 비활성화
 				options.addArguments("--disable-dev-shm-usage"); // /dev/shm 사용하지 않고 일번적인 디스크 기반의 tmpfs를 사용
@@ -74,8 +75,8 @@ public class proxyWebDriver {
 //		        options.addArguments("--remote-debugging-address=127.0.0.1"); // -> 문제발생 (23.07.10) 
 //		        options.addArguments("--remote-debugging-port=9222"); // -> 문제발생 (23.07.10)
 		        options.addArguments("Sec-Fetch-Site=same-origin");
-		        options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36");
-		        										        
+//		        options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36");
+		        options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36");										        
 		        Proxy proxy = new Proxy();
 		        proxy.setHttpProxy(proxyIp + ":" + port);
 		        proxy.setSslProxy(proxyIp + ":" + port);
