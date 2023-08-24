@@ -5,4 +5,6 @@
 
 #### build
 #### run
+계정추가 : TwitterLoginInfoManager_Insert.bat
+계정업데이트 : TwitterLoginInfoManager_update.bat
 #### main
