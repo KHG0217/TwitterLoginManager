@@ -3,6 +3,8 @@
 ##### 개발시작:2023/07/03
 ##### 최초커밋:2023/07/07
 
-#### build
-#### run
-#### main
+> build
+- mvn -Dmaven clean install
+> run
+- 계정추가 : TwitterLoginInfoManager_Insert.bat
+- 계정업데이트 : TwitterLoginInfoManager_update.bat
