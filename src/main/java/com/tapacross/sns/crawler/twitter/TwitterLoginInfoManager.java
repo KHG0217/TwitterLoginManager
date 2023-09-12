@@ -20,11 +20,14 @@ import java.util.Random;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.dbcp.SQLNestedException;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Cookie;
 import org.openqa.selenium.ElementNotVisibleException;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -183,7 +186,7 @@ public class TwitterLoginInfoManager {
 //		        options.addArguments("--use-fake-ui-for-media-stream");
 //		        options.addArguments("--use-fake-device-for-media-stream");
 		        options.addArguments("--incognito"); // 크롬 씨크릿모드
-//		        options.addArguments("--lang=en");
+		        options.addArguments("--lang=en");
 //		        options.addArguments("--disable-cache");
 //		        options.addArguments("--disable-cookies");
 				options.addArguments("disable-infobars");// 크롬브라우저 정보 바 비활성
@@ -236,7 +239,7 @@ public class TwitterLoginInfoManager {
 			this.ruuKrDriver = null;
 			if(this.ruuKrDriver == null) {
 				ChromeOptions options = new ChromeOptions();
-//		        options.addArguments("--headless"); // 크롬창 숨기기, javascript가 감지가능 
+		        options.addArguments("--headless"); // 크롬창 숨기기, javascript가 감지가능 
 //		        options.addArguments("--use-fake-ui-for-media-stream");
 //		        options.addArguments("--use-fake-device-for-media-stream");
 		        options.addArguments("--incognito"); // 크롬 씨크릿모드
@@ -276,7 +279,7 @@ public class TwitterLoginInfoManager {
 		        // 현재 브라우저에 저장된 모든 쿠키를 가져옵니다.
 //		        Set<Cookie> cookies = driver.manage().getCookies();
 //		        logger.info(TWITTER_LOGIN_INFO_MANAGER + ", cookies Check : " + cookies);
-				logger.info(TWITTER_LOGIN_INFO_MANAGER + ", driver init OK");
+				logger.info(TWITTER_LOGIN_INFO_MANAGER + ", ruuKrDriver init OK");
 //				ThreadUtil.sleepSec(1000);
 			}
 		} catch (Exception e) {
@@ -537,39 +540,68 @@ public class TwitterLoginInfoManager {
 				
 				System.out.println("pwText : " + pwText);
 					
-				if(pwText.equals("Enter your password")) {
-					logger.error(TWITTER_LOGIN_INFO_MANAGER + ", Password Error Check id and password,  id:" + id +" , password : " + password);
-					return null;
-				} else if (pwText.contains("Enter it below to sign in.")) { // 일정시간 지나면 이메일 클릭으로 바뀌기도함
-//					logger.error(TWITTER_LOGIN_INFO_MANAGER + ", Email authentication Pass, email:" + email);
-//					initruuKr();
-//					String ruukrUrl = "http://ruu.kr/";
-////					
-//					ruuKrDriver.get(ruukrUrl);
-//					String ruuKrinputXpath ="/html/body/div[1]/div[1]/div/div[1]/form/input[3]";
-//					WebElement ruuKrinput = driver.findElement(By.xpath(ruuKrinputXpath));
-//					String email1 = email.replaceAll("@.+", "");
-//					System.out.println("email1 : " + email1);
-//					ruuKrinput.sendKeys(email1);
-//					
-//					ThreadUtil.sleepSec(1000);
-					return null;
-					
-				}
+					if(pwText.equals("Enter your password")) {
+						logger.error(TWITTER_LOGIN_INFO_MANAGER + ", Password Error Check id and password,  id:" + id +" , password : " + password);
+						return null;
+					} else if (pwText.contains("Enter it below to sign in.")) { // 일정시간 지나면 이메일 클릭으로 바뀌기도함, 추후변경  Enter it below to sign in.
+						logger.error(TWITTER_LOGIN_INFO_MANAGER + ", Email authentication Pass, email:" + email);
+						initruuKr();
+						String ruukrUrl = "http://ruu.kr/";
+	////					
+						ruuKrDriver.get(ruukrUrl);
+						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", ruuKrDriver get : " + ruukrUrl);
+						ThreadUtil.sleepSec(3);
+						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", email input start");
+						String ruuKrinputXpath ="/html/body/div[1]/div[1]/div/div[1]/form/input[3]";
+						WebElement ruuKrinput = ruuKrDriver.findElement(By.xpath(ruuKrinputXpath));
+						String email1 = email.replaceAll("@.+", "");
+						ruuKrinput.sendKeys(email1);
+						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", email input end");
+						
+						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", check code parse start");
+						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", mail context parse...");
+						String ruuKrmailcheckButtonXpath = "/html/body/div[1]/div[1]/div/div[1]/form/span";
+						WebElement ruuKrmailcheckButton = ruuKrDriver.findElement(By.xpath(ruuKrmailcheckButtonXpath));
+						ruuKrmailcheckButton.click();
+						ThreadUtil.sleepSec(2);
+						ruuKrmailcheckButton.click();
+						
+						String ruuKrMailTextXpath ="/html/body/div[1]/div[1]/div/div[3]";
+						WebElement ruuKrMailTextX = ruuKrDriver.findElement(By.xpath(ruuKrMailTextXpath));
+						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", mail context parse end");
+						
+						// 정규식사용
+						String pattern = "Your Twitter confirmation code is (\\w+)";
+				        Pattern regex = Pattern.compile(pattern);
+				        
+				        Matcher matcher = regex.matcher(ruuKrMailTextX.getText());
+				        
+				        if (matcher.find()) {
+				            String confirmationCode = matcher.group(1);
+				            System.out.println("Twitter code: " + confirmationCode);
+					        String twitterCheckEmailInputXpath ="/html/body/div[1]/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[1]/div/div[2]/label/div/div[2]/div/input";
+					        WebElement twitterCheckEmailInput = driver.findElement(By.xpath(twitterCheckEmailInputXpath));
+					        twitterCheckEmailInput.sendKeys(confirmationCode);
+					        ThreadUtil.sleepSec(3);
+					        Actions actions = new Actions(driver);
+	
+					        actions.sendKeys(Keys.TAB).perform();
+					        actions.sendKeys(Keys.TAB).perform();
+					        actions.sendKeys(Keys.TAB).perform();
+					        actions.sendKeys(Keys.ENTER).perform();
+					        ThreadUtil.sleepSec(3);		
+					        logger.info(TWITTER_LOGIN_INFO_MANAGER + ", check code parse end");
+					        ruuDriverAbort();
+					        
+					        
+				        } else {
+				        	logger.info(TWITTER_LOGIN_INFO_MANAGER + ", Not Found check code, check email, email: "+email );
+				            logger.info(TWITTER_LOGIN_INFO_MANAGER + ", check code parse end");
+				            ruuDriverAbort();
+							return null;
+				        }		
+					}
 				
-
-					logger.info(TWITTER_LOGIN_INFO_MANAGER + ", email input start, email : " + email);
-					String emailXpath ="/html/body/div[1]/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[1]/div/div[2]/label/div/div[2]/div/input";
-					WebElement emailInput = driver.findElement(By.xpath(emailXpath));
-					emailInput.sendKeys(email);
-					logger.info(TWITTER_LOGIN_INFO_MANAGER + ", email input end");
-					
-					String emailLoginXpath ="/html/body/div[1]/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[2]/div/div/div/div/div";
-					WebElement emailLoginInput = driver.findElement(By.xpath(emailLoginXpath));
-					emailLoginInput.click();
-					logger.info(TWITTER_LOGIN_INFO_MANAGER + ", emailInput Click");		
-					driver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
-					ThreadUtil.sleepSec(3);
 				} catch (Exception e) {
 					e.printStackTrace();
 					logger.error(TWITTER_LOGIN_INFO_MANAGER + ", email Activate Error :" + email);
@@ -579,15 +611,6 @@ public class TwitterLoginInfoManager {
 
 			}
 						
-//	        int waitTimeInSeconds = 15;	        
-//	        WebDriverWait wait = new WebDriverWait(driver, waitTimeInSeconds);
-//
-//	        wait.until(new ExpectedCondition<Boolean>() {
-//	            @Override
-//	            public Boolean apply(WebDriver driver) {
-//	                return driver.getCurrentUrl().equals("https://twitter.com/home");
-//	            }
-//	        });
 	        
 	        if(driver.getCurrentUrl().equals("https://twitter.com/account/access")) {
 	        	logger.info(TWITTER_LOGIN_INFO_MANAGER + ", Activate Id Access");

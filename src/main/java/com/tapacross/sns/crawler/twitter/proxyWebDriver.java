@@ -46,7 +46,7 @@ public class proxyWebDriver {
 			
 			System.out.println(proxyIp+":"+port);
 			pwdClass.initDriver(proxyIp, port);
-			
+
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -63,7 +63,8 @@ public class proxyWebDriver {
 //		        options.addArguments("--headless"); // 크롬창 숨기기, javascript가 감지가능 
 //		        options.addArguments("--use-fake-ui-for-media-stream");
 //		        options.addArguments("--use-fake-device-for-media-stream");
-		        options.addArguments("--incognito"); // 크롬 씨크릿모드
+//				options.addArguments("--blink-settings=imagesEnabled=false"); // 이미지차단
+		        options.addArguments("--incognito"); // 이미지를 로딩 x
 		        options.addArguments("--disable-cache");
 		        options.addArguments("--disable-cookies");
 				options.addArguments("disable-infobars");// 크롬브라우저 정보 바 비활성
@@ -74,7 +75,8 @@ public class proxyWebDriver {
 				options.setExperimentalOption("excludeSwitches", Collections.singletonList("enable-automation")); //enable-automation스위치를 제외하고 실행합니다.
 //		        options.addArguments("--remote-debugging-address=127.0.0.1"); // -> 문제발생 (23.07.10) 
 //		        options.addArguments("--remote-debugging-port=9222"); // -> 문제발생 (23.07.10)
-		        options.addArguments("Sec-Fetch-Site=same-origin");
+				options.addArguments("Sec-Fetch-Site=same-origin");
+				options.addArguments("Sec-Fetch-Site=same-origin");
 //		        options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36");
 		        options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36");										        
 		        Proxy proxy = new Proxy();
@@ -90,6 +92,7 @@ public class proxyWebDriver {
 				try {
 					this.driver = new ChromeDriver(options);
 //					this.driver = new ChromeDriver();
+					this.driver.get("https://twitter.com/i/flow/login");
 				} catch (Exception e) {
 					logger.error(TWITTER_LOGIN_INFO_MANAGER + ", driver new ChromeDriver(options Error");
 					e.printStackTrace();
