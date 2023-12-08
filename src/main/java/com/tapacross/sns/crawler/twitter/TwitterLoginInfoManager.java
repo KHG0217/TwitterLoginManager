@@ -63,8 +63,7 @@ public class TwitterLoginInfoManager {
 	private static List<String> insertfailList = new ArrayList<>();
 	private static List<String> updatefailList = new ArrayList<>();
 	private static int ProxyIpListindex = 0;
-	private static int ProxyIpListSize = 0;
-	
+	private static int ProxyIpListSize = 0;	
 	 private final int MAX_RETRY = 5; // 최대 재시도 횟수 https://twitter.com/account/access?lang=en
 	
 	 /*
@@ -182,7 +181,7 @@ public class TwitterLoginInfoManager {
 			this.driver = null;
 			if(this.driver == null) {
 				ChromeOptions options = new ChromeOptions();
-		        options.addArguments("--headless"); // 크롬창 숨기기, javascript가 감지가능 
+//		        options.addArguments("--headless"); // 크롬창 숨기기, javascript가 감지가능 
 //		        options.addArguments("--use-fake-ui-for-media-stream");
 //		        options.addArguments("--use-fake-device-for-media-stream");
 		        options.addArguments("--incognito"); // 크롬 씨크릿모드
@@ -397,7 +396,7 @@ public class TwitterLoginInfoManager {
 	
 	/*
 	 * 트위터 block된 id를 수동으로 해제후 활성화 시킨다.
-	 * 현재 block 계정 업데이트하는 STATUS 값 : C
+	 * 현재 block 계정 업데이트하는 STATUS 값 : F
 	 *  
 	 * */
 	public void updateTwitterAuthData(String proxyIp, int port) {
@@ -466,6 +465,7 @@ public class TwitterLoginInfoManager {
 					init(proxyIP,port);
 				}
 				
+				
 			/* Connect Page */	
 			boolean isConnected = false;
 			int retryCount = 1;
@@ -479,13 +479,21 @@ public class TwitterLoginInfoManager {
 					/* login page 이동*/
 					logger.info(TWITTER_LOGIN_INFO_MANAGER + ", driver get login start");
 					driver.get(loginUrl);
+					ThreadUtil.sleepSec(5);
 					driver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
 					logger.info(TWITTER_LOGIN_INFO_MANAGER + ", driver get login end");
 					
-					logger.info(TWITTER_LOGIN_INFO_MANAGER + ", idInput start, id : " + id);
-					String idXpath ="/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[5]/label/div/div[2]/div/input";
-					WebElement idInput = driver.findElement(By.xpath(idXpath)); // 프록시 사용으로 연결 실패시, 해당 엘리멘트를 찾지못하는 경우 발생 
-					idInput.sendKeys(id);
+					logger.info(TWITTER_LOGIN_INFO_MANAGER + ", idInput start, id : " + id); 
+					
+//					String idXpath ="/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[5]/label/div/div[2]/div/input";
+					String idXpath ="/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[5]/label/div/div[1]";
+					WebElement idInput = driver.findElement(By.xpath(idXpath)); // 로그인화면창 찾는용도 화면이 안뜰시 재시도
+//					idInput.sendKeys(id);
+					
+					// id입력으로 이동
+					driverActions_Keys(this.driver,Keys.TAB,3);
+					driverActions_data(this.driver, id);	
+			        System.out.println("id perform");
 					logger.info(TWITTER_LOGIN_INFO_MANAGER + ", idInput start end");
 					isConnected = true;
 //					ThreadUtil.sleepSec(3);
@@ -501,17 +509,24 @@ public class TwitterLoginInfoManager {
 			
 			try {	
 				/* id 입력 후 클릭 */
-				String idLoginInputXpath ="/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[6]";
-				WebElement idLoginInput = driver.findElement(By.xpath(idLoginInputXpath));
-				idLoginInput.click();
+				driverActions_Keys(this.driver,Keys.TAB,1);
+				driverActions_Keys(this.driver,Keys.ENTER,1);
+				ThreadUtil.sleepSec(3);
+//				actions.sendKeys(Keys.TAB).perform();
+//				actions.sendKeys(Keys.ENTER).perform();
+//				String idLoginInputXpath ="/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[6]";
+//				WebElement idLoginInput = driver.findElement(By.xpath(idLoginInputXpath));
+//				idLoginInput.click();
 				logger.info(TWITTER_LOGIN_INFO_MANAGER + ", idLoginInput Click");		
 				driver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
-//				ThreadUtil.sleepSec(3);
 				
-				logger.info(TWITTER_LOGIN_INFO_MANAGER + ", pwInput start, password : " + password);
-				String pwXpath ="/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[1]/div/div/div[3]/div/label/div/div[2]/div[1]/input";
-				WebElement pwInput = driver.findElement(By.xpath(pwXpath));
-				pwInput.sendKeys(password);
+				driverActions_data(this.driver, password);
+				
+//				logger.info(TWITTER_LOGIN_INFO_MANAGER + ", pwInput start, password : " + password);
+//				String pwXpath ="/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[1]/div/div/div[3]/div/label/div/div[2]/div[1]/input";
+//				WebElement pwInput = driver.findElement(By.xpath(pwXpath));
+//				pwInput.sendKeys(password);
+//				actions.sendKeys(password).perform();	
 				logger.info(TWITTER_LOGIN_INFO_MANAGER + ", pwInput start end");
 //				ThreadUtil.sleepSec(3);
 			}catch (NoSuchElementException e) {
@@ -522,20 +537,26 @@ public class TwitterLoginInfoManager {
 			}
 			
 			/* password 입력 후 클릭 */
-			String pwLoginInputXpath ="/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[2]/div/div[1]/div/div/div/div";
-			WebElement pwLoginInput = driver.findElement(By.xpath(pwLoginInputXpath));
-			pwLoginInput.click();
+			driverActions_Keys(this.driver,Keys.TAB,3);
+			driverActions_Keys(this.driver,Keys.ENTER,1); 
+//			String pwLoginInputXpath ="/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[2]/div/div[1]/div/div/div/div";
+//			WebElement pwLoginInput = driver.findElement(By.xpath(pwLoginInputXpath));
+//			pwLoginInput.click();
+//			actions.sendKeys(Keys.TAB).perform();
+//			actions.sendKeys(Keys.TAB).perform();
+//			actions.sendKeys(Keys.TAB).perform();
+//			actions.sendKeys(Keys.ENTER).perform();
 			logger.info(TWITTER_LOGIN_INFO_MANAGER + ", pwLoginInput Click");		
 			driver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
 			ThreadUtil.sleepSec(3);
 
 			/* email 추가인증 요구시 */
-			if(driver.getCurrentUrl().equals("https://twitter.com/i/flow/login")) {
-				
+			if(this.driver.getCurrentUrl().equals("https://twitter.com/i/flow/login")) {
 				try {
-				/* 비밀번호 오류 체크로직 */
+				/* 비밀번호 오류 체크로직 */ 
+//					ThreadUtil.sleepSec(999);
 //				String pwTextXpath ="/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[1]/div/div/div[1]/div/h1/span/span";
-				String pwTextXpath ="/html/body/div[1]/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[1]/div/div[1]/div/div/div/div/span";
+				String pwTextXpath ="/html/body/div[1]/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[1]/div/div[1]/div/div/div/div/span/span";
 				String pwText = driver.findElement(By.xpath(pwTextXpath)).getText();
 				
 				System.out.println("pwText : " + pwText);
@@ -583,12 +604,10 @@ public class TwitterLoginInfoManager {
 					        WebElement twitterCheckEmailInput = driver.findElement(By.xpath(twitterCheckEmailInputXpath));
 					        twitterCheckEmailInput.sendKeys(confirmationCode);
 					        ThreadUtil.sleepSec(3);
-					        Actions actions = new Actions(driver);
-	
-					        actions.sendKeys(Keys.TAB).perform();
-					        actions.sendKeys(Keys.TAB).perform();
-					        actions.sendKeys(Keys.TAB).perform();
-					        actions.sendKeys(Keys.ENTER).perform();
+//					        Actions actions = new Actions(driver);
+					        
+					        driverActions_Keys(this.driver, Keys.TAB, 3);
+					        driverActions_Keys(this.driver, Keys.ENTER, 1);
 					        ThreadUtil.sleepSec(3);		
 					        logger.info(TWITTER_LOGIN_INFO_MANAGER + ", check code parse end");
 					        ruuDriverAbort();
@@ -615,48 +634,46 @@ public class TwitterLoginInfoManager {
 	        if(driver.getCurrentUrl().equals("https://twitter.com/account/access")) {
 	        	logger.info(TWITTER_LOGIN_INFO_MANAGER + ", Activate Id Access");
 				try {
-					driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);	
-			        // Actions 객체 생성
-			        Actions actions = new Actions(driver);
-
-			        // 마우스를 (x, y) 위치로 이동
-			        ThreadUtil.sleepSec(7);
-					String unLockInputXpath ="/html/body/div[2]/div/form/input[6]";
-					WebElement unLockInput = driver.findElement(By.xpath(unLockInputXpath));
-			        int x = unLockInput.getLocation().getX();
-			        int y = unLockInput.getLocation().getY();
-			        System.out.println("X : " + x );
-			        System.out.println("y : " + y );
-//			        actions.moveByOffset(x, y).perform();
-			        actions.moveToElement(unLockInput).perform();
-			        ThreadUtil.sleepSec(5);
-			        actions.click().perform();
-			        
-			        if(x == 0 && y == 0) {
-			        	System.out.println("Activate Id Access fail, CAPTHCA Check!!");
-			        	return null;
-			        }
-					
-					if (driver.getCurrentUrl().equals("https://twitter.com/account/access?lang=en")) { // start Click -> Continue to Twitter
-						String unLockInputXpath2 ="/html/body/div[2]/div/form/input[6]";
-						WebElement unLockInput2 = driver.findElement(By.xpath(unLockInputXpath2));
-				        int x2 = unLockInput2.getLocation().getX();
-				        int y2 = unLockInput2.getLocation().getY();
-				        System.out.println("x2: " + x2 );
-				        System.out.println("y2 : " + y2 );
-				        actions.moveToElement(unLockInput2).perform();
-				        ThreadUtil.sleepSec(5);
-				        actions.click().perform();
-				        ThreadUtil.sleepSec(5);
-				        logger.info(TWITTER_LOGIN_INFO_MANAGER + ", Activate Id Access Continue Botton Click");
-				        ThreadUtil.sleepSec(5);
-				        				        
-					}
-					
-			        
-					ThreadUtil.sleepSec(7);
+//					driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);	
+//			        // Actions 객체 생성
+//			        Actions actions = new Actions(driver);
+//
+//			        // 마우스를 (x, y) 위치로 이동
+//			        ThreadUtil.sleepSec(7);
+//					String unLockInputXpath ="/html/body/div[2]/div/form/input[6]";
+//					WebElement unLockInput = driver.findElement(By.xpath(unLockInputXpath));
+//			        int x = unLockInput.getLocation().getX();
+//			        int y = unLockInput.getLocation().getY();
+//			        System.out.println("X : " + x );
+//			        System.out.println("y : " + y );
+////			        actions.moveByOffset(x, y).perform();
+//			        actions.moveToElement(unLockInput).perform();
+//			        ThreadUtil.sleepSec(5);
+//			        actions.click().perform();
+//			        
+//			        if(x == 0 && y == 0) {
+//			        	System.out.println("Activate Id Access fail, CAPTHCA Check!!");
+//			        	return null;
+//			        }
+//					
+//					if (driver.getCurrentUrl().equals("https://twitter.com/account/access?lang=en")) { // start Click -> Continue to Twitter
+//						String unLockInputXpath2 ="/html/body/div[2]/div/form/input[6]";
+//						WebElement unLockInput2 = driver.findElement(By.xpath(unLockInputXpath2));
+//				        int x2 = unLockInput2.getLocation().getX();
+//				        int y2 = unLockInput2.getLocation().getY();
+//				        System.out.println("x2: " + x2 );
+//				        System.out.println("y2 : " + y2 );
+//				        actions.moveToElement(unLockInput2).perform();
+//				        ThreadUtil.sleepSec(5);
+//				        actions.click().perform();
+//				        ThreadUtil.sleepSec(5);
+//				        logger.info(TWITTER_LOGIN_INFO_MANAGER + ", Activate Id Access Continue Botton Click");
+//				        ThreadUtil.sleepSec(5);
+//				        				        
+//					}
+					ThreadUtil.sleepSec(3);
 					/* home화면 나오지 않을시 실패로 판단 */
-					if(!driver.getCurrentUrl().contains("https://twitter.com/home?")) {
+					if(!driver.getCurrentUrl().contains("https://twitter.com/home")) {
 						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", Activate Id Access fail, CAPTHCA Check!!");
 						return null;
 					} 
@@ -664,7 +681,7 @@ public class TwitterLoginInfoManager {
 				} catch (ElementNotVisibleException e) {
 					logger.info(TWITTER_LOGIN_INFO_MANAGER + ", CAPTCHA Login PASS or unLockInput Xpatgh Change");
 					return null;
-				}
+				} 
 	        } 
 	        
 			Cookie csrfName = null;
@@ -697,6 +714,25 @@ public class TwitterLoginInfoManager {
 			abort();
 		}
 		return loginInfo;
+	}
+	
+	
+	public void driverActions_data(WebDriver driver, String data) {
+		Actions actions = new Actions(driver);
+		actions.sendKeys(data).perform();
+		ThreadUtil.sleep(500);
+	}
+	
+	public void driverActions_Keys(WebDriver driver, Keys key, int count) {
+		Actions actions = new Actions(driver);
+		
+		int num = 0;
+		while(count > num) {
+			actions.sendKeys(key).perform();
+			System.out.println(key.name());
+			ThreadUtil.sleep(500);
+			num ++;
+		}			
 	}
 
 }

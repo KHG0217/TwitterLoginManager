@@ -94,7 +94,7 @@ public class proxyWebDriver {
 //					this.driver = new ChromeDriver();
 					this.driver.get("https://twitter.com/i/flow/login");
 				} catch (Exception e) {
-					logger.error(TWITTER_LOGIN_INFO_MANAGER + ", driver new ChromeDriver(options Error");
+					logger.error(TWITTER_LOGIN_INFO_MANAGER + ", driver new ChromeDriver(options Error)");
 					e.printStackTrace();
 					abort();
 				}
