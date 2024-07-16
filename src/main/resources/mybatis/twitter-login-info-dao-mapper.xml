@@ -11,7 +11,7 @@
 	<select id="selectStatusFTwitterId" resultType="AuthToken">
 		SELECT EMAIL, USER_ID as userId , USER_PASSWORD as userPassword FROM TB_TWITTER_AUTH_TOKEN
 		WHERE 1=1
-		AND STATUS = 'F'
+		AND STATUS = 'X'
 	</select>
 	
 	<insert id="insertTwitterNewId" parameterType="AuthToken" >
@@ -38,5 +38,53 @@
 		STATUS = 'T'
 		WHERE 1=1 
 		AND EMAIL = #{email}
+	</update>
+	
+	<update id = "updateAuthTokenStatusC" parameterType="String">
+		UPDATE TB_TWITTER_AUTH_TOKEN
+		SET STATUS ='C'
+		WHERE 1=1
+		AND EMAIL = #{email}
+	</update>
+	
+	<update id = "updateAuthTokenStatusE" parameterType="String">
+		UPDATE TB_TWITTER_AUTH_TOKEN
+		SET STATUS ='E'
+		WHERE 1=1
+		AND EMAIL = #{email}
+	</update>
+	
+	<update id = "updateAuthTokenStatusF" parameterType="String">
+		UPDATE TB_TWITTER_AUTH_TOKEN
+		SET STATUS ='F'
+		WHERE 1=1
+		AND EMAIL = #{email}
+	</update>
+	
+	<select id="selectIpAuthInfo" parameterType="String" resultType="AuthToken">
+		SELECT EMAIL, USER_ID as userId , USER_PASSWORD as userPassword, TOKEN, COOKIE, USE_UID as useUid,
+		 CREATE_DATE as createDate, USE_DATE as useDate,
+		 STATUS, IP FROM TB_TWITTER_AUTH_TOKEN
+		WHERE 1=1
+		AND IP = #{ip}
+	</select>
+	
+	<update id = "updateAuthToken401" parameterType="String">
+		UPDATE TB_TWITTER_AUTH_TOKEN
+		SET STATUS ='Z'
+		WHERE 1=1
+		AND USER_ID = #{id}
+	</update>
+	
+	<select id="select401TwitterId" resultType="AuthToken">
+		SELECT EMAIL, USER_ID as userId , USER_PASSWORD as userPassword FROM TB_TWITTER_AUTH_TOKEN
+		WHERE 1=1
+		AND STATUS = 'Z'
+	</select>
+	
+	<update id="updateAuthTokenUseDateReset" parameterType="AuthToken">
+		UPDATE TB_TWITTER_AUTH_TOKEN
+		SET USE_DATE = #{useDate}
+		WHERE 1=1 AND USER_ID = #{userId}
 	</update>
 </mapper>

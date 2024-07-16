@@ -201,8 +201,6 @@ public class TwitterSignUpProgram {
 
 		try {
 			driverTwitter.get("https://twitter.com/i/flow/login");
-	        // WebDriverWait 인스턴스 생성
-	        WebDriverWait urlWait = new WebDriverWait(driverTwitter, 10);
 	        
 	        ThreadUtil.sleepSec(3);
 			
@@ -217,11 +215,6 @@ public class TwitterSignUpProgram {
 	        ThreadUtil.sleepSec(3);
 	        
 	        String targetURL ="https://twitter.com/i/flow/signup";
-	        urlWait.until(new ExpectedCondition<Boolean>() {
-	            public Boolean apply(WebDriver driver) {
-	                return driver.getCurrentUrl().equals(targetURL);
-	            }
-	        });
 	        logger.info(TWITTER_LOGIN_INFO_MANAGER + ", URL Loding OK URL: + "+ targetURL );
 	        
 	        /* 가입하기 클릭 */
@@ -508,10 +501,10 @@ public class TwitterSignUpProgram {
 			}
 			int proxyIpListSize = proxyIpList.size() - 1;
 			int count = 0 ;
-			for (int i = 21; 60 > i; i++) {
+			for (int i = 4; 60 > i; i++) {
 				String email = null;
 				String id = null;
-				String emailPrex = "tapa23112296";
+				String emailPrex = "tapa24011096";
 				Map.Entry<String, Integer> proxyIpInfo = distinguishIpAndProt(i);
 				String proxyIp = proxyIpInfo.getKey();
 				int port = proxyIpInfo.getValue();
@@ -540,8 +533,7 @@ public class TwitterSignUpProgram {
 		try {
 			driverTwitter.get("https://twitter.com/i/flow/login");
 	        // WebDriverWait 인스턴스 생성
-	        WebDriverWait urlWait = new WebDriverWait(driverTwitter, 10);
-	        
+
 	        ThreadUtil.sleepSec(3);
 			
 	        /* 가입하기 클릭 */
@@ -555,11 +547,6 @@ public class TwitterSignUpProgram {
 	        ThreadUtil.sleepSec(3);
 	        
 	        String targetURL ="https://twitter.com/i/flow/signup";
-	        urlWait.until(new ExpectedCondition<Boolean>() {
-	            public Boolean apply(WebDriver driver) {
-	                return driver.getCurrentUrl().equals(targetURL);
-	            }
-	        });
 	        logger.info(TWITTER_LOGIN_INFO_MANAGER + ", URL Loding OK URL: + "+ targetURL );
 	        
 	        /* 가입하기 클릭 */

@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "HTTP://mybatis.org/dtd/mybatis-3-config.dtd">
-<configuration>
+
+<configuration>    
 	<settings>
 		<setting name="cacheEnabled" value="false" />
 		<setting name="useGeneratedKeys" value="true" />
-		<setting name="defaultExecutorType" value="REUSE" />
-	</settings>
+		<setting name="defaultExecutorType" value="REUSE" />	
+	</settings>	
 	<typeAliases>		
 		<typeAlias type="com.tapacross.sns.entity.TBTwitterAuthToken"
-		alias="AuthToken" />
-	</typeAliases>
+		alias="AuthToken" />	
+	</typeAliases>   
+
 	<mappers>
 		<mapper resource="mybatis/twitter-login-info-dao-mapper.xml" />
 	</mappers>
