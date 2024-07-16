@@ -233,16 +233,20 @@
 		</dependency>
 		 -->
 
+<!--  임시 비활성화 
 		<dependency>
 			<groupId>com.codeborne</groupId>
 			<artifactId>phantomjsdriver</artifactId>
 			<version>1.2.1</version>
-		</dependency>
+		</dependency>				-->
+
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpclient</artifactId>
 			<version>${httpclient.version}</version>
 		</dependency>
+
+		
 		<dependency>
 			<groupId>com.oracle.ojdbc</groupId>
 			<artifactId>odjbc5_g</artifactId>
@@ -270,6 +274,24 @@
 			<artifactId>jsoup</artifactId>
 			<version>1.12.1</version>
 		</dependency>
+		<!-- 테스트중	     -->
+	    <dependency>
+	        <groupId>org.seleniumhq.selenium</groupId>
+	        <artifactId>selenium-java</artifactId>
+	        <version>4.12.1</version>
+	    </dependency>
+	    <dependency>
+	        <groupId>org.seleniumhq.selenium</groupId>
+	        <artifactId>selenium-chrome-driver</artifactId>
+	        <version>4.12.1</version>      
+	    </dependency>
+	    
+	    <dependency>
+    		<groupId>org.apache.commons</groupId>
+    		<artifactId>commons-exec</artifactId>
+   		 	<version>1.3</version>
+		</dependency>
+	    
 		<dependency>
 			<groupId>storm</groupId>
 			<artifactId>storm</artifactId>
@@ -302,7 +324,7 @@
 			</resource>
 			<resource>
 				<directory>src/main/resources/${environment}</directory>
-			</resource>
+			</resource>			
 		</resources>
 		<pluginManagement>
 			<plugins>
