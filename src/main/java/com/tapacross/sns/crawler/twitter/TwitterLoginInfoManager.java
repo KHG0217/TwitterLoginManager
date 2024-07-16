@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.Set;
@@ -26,13 +27,16 @@ import java.util.regex.Pattern;
 import org.apache.commons.dbcp.SQLNestedException;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Cookie;
-import org.openqa.selenium.ElementNotVisibleException;
+import org.openqa.selenium.ElementNotInteractableException;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.devtools.DevTools;
+import org.openqa.selenium.devtools.v114.network.Network;
+import org.openqa.selenium.devtools.v114.network.model.Request;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.Proxy;
 import org.slf4j.Logger;
@@ -48,8 +52,8 @@ import com.tapacross.sns.util.ThreadUtil;
 
 
 public class TwitterLoginInfoManager {
-	private WebDriver driver;
-	private WebDriver ruuKrDriver;
+	private ChromeDriver driver;
+	private WebDriver  ruuKrDriver; 
 	private static final String TWITTER_LOGIN_INFO_MANAGER = "twitter-login-info-manager";
 	private static final String MAP_TOKEN_KEY_NAME = "crsfToken";
 	private static final String MAP_COOKIE_KEY_NAME = "cookie";
@@ -76,7 +80,7 @@ public class TwitterLoginInfoManager {
 	  * 
 	  * 현재 프록시는 사용하지 않는다.
 	  * */
-	public static void main(String[] args) {		
+	public static void main(String[] args) { 		
 		TwitterLoginInfoManager manger = new TwitterLoginInfoManager();
 		String proxyPath ="target/classes/data/haiip.txt";			
 		try {
@@ -122,7 +126,7 @@ public class TwitterLoginInfoManager {
 			case 2:
 				System.out.println("----------------UPDATE START---------------------------------");
 				System.out.println("----------------CURRENT DATE: " + date + "-------------");				
-				manger.updateTwitterAuthData(null, 0);
+				manger.updateTwitterAuthData("49.254.151.17", 6576);
 				System.out.println("----------------UPDATE END---------------------------------");
 				System.out.println("updateCount : " + updateCount);
 				System.out.println("updateFailCount : " + updateFailCount);
@@ -179,12 +183,12 @@ public class TwitterLoginInfoManager {
 	private void init (String proxyIp, int port) {
 		try {
 			this.driver = null;
-			if(this.driver == null) {
+			if(this.driver == null) { //확인
 				ChromeOptions options = new ChromeOptions();
 //		        options.addArguments("--headless"); // 크롬창 숨기기, javascript가 감지가능 
-//		        options.addArguments("--use-fake-ui-for-media-stream");
-//		        options.addArguments("--use-fake-device-for-media-stream");
-		        options.addArguments("--incognito"); // 크롬 씨크릿모드
+		        options.addArguments("--use-fake-ui-for-media-stream");
+		        options.addArguments("--use-fake-device-for-media-stream");
+//		        options.addArguments("--incognito"); // 크롬 씨크릿모드
 		        options.addArguments("--lang=en");
 //		        options.addArguments("--disable-cache");
 //		        options.addArguments("--disable-cookies");
@@ -197,11 +201,11 @@ public class TwitterLoginInfoManager {
 //		        options.addArguments("--remote-debugging-address=127.0.0.1"); // -> 문제발생 (23.07.10) 
 //		        options.addArguments("--remote-debugging-port=9222"); // -> 문제발생 (23.07.10)
 		        options.addArguments("Sec-Fetch-Site=same-origin");
-		        options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36");
-		        										        
+		        options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36");	
+		        options.addArguments("--remote-allow-origins=*"); // 4.12 phantomJs update후 사용
 		        Proxy proxy = new Proxy();
-		        proxy.setHttpProxy(proxyIp + ":" + port);
-		        proxy.setSslProxy(proxyIp + ":" + port);
+//		        proxy.setHttpProxy(proxyIp + ":" + port);
+//		        proxy.setSslProxy(proxyIp + ":" + port);
 //		        options.addArguments("--proxy-server=http://" + proxyIp + ":" + port);
 		        
 				logger.info(TWITTER_LOGIN_INFO_MANAGER + ", driver init start");
@@ -238,13 +242,13 @@ public class TwitterLoginInfoManager {
 			this.ruuKrDriver = null;
 			if(this.ruuKrDriver == null) {
 				ChromeOptions options = new ChromeOptions();
-		        options.addArguments("--headless"); // 크롬창 숨기기, javascript가 감지가능 
+//		        options.addArguments("--headless"); // 크롬창 숨기기, javascript가 감지가능 
 //		        options.addArguments("--use-fake-ui-for-media-stream");
 //		        options.addArguments("--use-fake-device-for-media-stream");
 		        options.addArguments("--incognito"); // 크롬 씨크릿모드
 		        options.addArguments("--lang=en");
-//		        options.addArguments("--disable-cache");
-//		        options.addArguments("--disable-cookies");
+		        options.addArguments("--disable-cache");
+		        options.addArguments("--disable-cookies");
 				options.addArguments("disable-infobars");// 크롬브라우저 정보 바 비활성
 				options.addArguments("--no-sandbox"); // 샌드박스 비활성화
 				options.addArguments("--disable-dev-shm-usage"); // /dev/shm 사용하지 않고 일번적인 디스크 기반의 tmpfs를 사용
@@ -484,10 +488,10 @@ public class TwitterLoginInfoManager {
 					logger.info(TWITTER_LOGIN_INFO_MANAGER + ", driver get login end");
 					
 					logger.info(TWITTER_LOGIN_INFO_MANAGER + ", idInput start, id : " + id); 
-					
+			//test중		
 //					String idXpath ="/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[5]/label/div/div[2]/div/input";
-					String idXpath ="/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[5]/label/div/div[1]";
-					WebElement idInput = driver.findElement(By.xpath(idXpath)); // 로그인화면창 찾는용도 화면이 안뜰시 재시도
+//					String idXpath ="/html/body/div/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div/div/div/div[5]/label/div/div[1]";
+//					WebElement idInput = driver.findElement(By.xpath(idXpath)); // 로그인화면창 찾는용도 화면이 안뜰시 재시도
 //					idInput.sendKeys(id);
 					
 					// id입력으로 이동
@@ -551,7 +555,7 @@ public class TwitterLoginInfoManager {
 			ThreadUtil.sleepSec(3);
 
 			/* email 추가인증 요구시 */
-			if(this.driver.getCurrentUrl().equals("https://twitter.com/i/flow/login")) {
+			if(this.driver.getCurrentUrl().equals("https://x.com/i/flow/login")) {
 				try {
 				/* 비밀번호 오류 체크로직 */ 
 //					ThreadUtil.sleepSec(999);
@@ -561,64 +565,70 @@ public class TwitterLoginInfoManager {
 				
 				System.out.println("pwText : " + pwText);
 					
-					if(pwText.equals("Enter your password")) {
-						logger.error(TWITTER_LOGIN_INFO_MANAGER + ", Password Error Check id and password,  id:" + id +" , password : " + password);
-						return null;
-					} else if (pwText.contains("Enter it below to sign in.")) { // 일정시간 지나면 이메일 클릭으로 바뀌기도함, 추후변경  Enter it below to sign in.
+					if(pwText.contains("email address associated with your X account. ")) { // 간단한 이메일 인증
+						logger.error(TWITTER_LOGIN_INFO_MANAGER + ", email address associated with your X account.");
+						driverActions_data(this.driver, email);
+						driverActions_Keys(this.driver, Keys.TAB, 3);
+						driverActions_Keys(this.driver, Keys.ENTER, 1);
+						ThreadUtil.sleepSec(3);	
+					} else if (pwText.contains("Enter it below to sign in.")) { // 일정시간 지나면 이메일 클릭으로 바뀌기도함, 추후변경  Enter it below to sign in./ test를 위해 주석처리
 						logger.error(TWITTER_LOGIN_INFO_MANAGER + ", Email authentication Pass, email:" + email);
-						initruuKr();
-						String ruukrUrl = "http://ruu.kr/";
-	////					
-						ruuKrDriver.get(ruukrUrl);
-						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", ruuKrDriver get : " + ruukrUrl);
-						ThreadUtil.sleepSec(3);
-						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", email input start");
-						String ruuKrinputXpath ="/html/body/div[1]/div[1]/div/div[1]/form/input[3]";
-						WebElement ruuKrinput = ruuKrDriver.findElement(By.xpath(ruuKrinputXpath));
-						String email1 = email.replaceAll("@.+", "");
-						ruuKrinput.sendKeys(email1);
-						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", email input end");
-						
-						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", check code parse start");
-						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", mail context parse...");
-						String ruuKrmailcheckButtonXpath = "/html/body/div[1]/div[1]/div/div[1]/form/span";
-						WebElement ruuKrmailcheckButton = ruuKrDriver.findElement(By.xpath(ruuKrmailcheckButtonXpath));
-						ruuKrmailcheckButton.click();
-						ThreadUtil.sleepSec(2);
-						ruuKrmailcheckButton.click();
-						
-						String ruuKrMailTextXpath ="/html/body/div[1]/div[1]/div/div[3]";
-						WebElement ruuKrMailTextX = ruuKrDriver.findElement(By.xpath(ruuKrMailTextXpath));
-						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", mail context parse end");
-						
-						// 정규식사용
-						String pattern = "Your Twitter confirmation code is (\\w+)";
-				        Pattern regex = Pattern.compile(pattern);
-				        
-				        Matcher matcher = regex.matcher(ruuKrMailTextX.getText());
-				        
-				        if (matcher.find()) {
-				            String confirmationCode = matcher.group(1);
-				            System.out.println("Twitter code: " + confirmationCode);
-					        String twitterCheckEmailInputXpath ="/html/body/div[1]/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[1]/div/div[2]/label/div/div[2]/div/input";
-					        WebElement twitterCheckEmailInput = driver.findElement(By.xpath(twitterCheckEmailInputXpath));
-					        twitterCheckEmailInput.sendKeys(confirmationCode);
-					        ThreadUtil.sleepSec(3);
-//					        Actions actions = new Actions(driver);
-					        
-					        driverActions_Keys(this.driver, Keys.TAB, 3);
-					        driverActions_Keys(this.driver, Keys.ENTER, 1);
-					        ThreadUtil.sleepSec(3);		
-					        logger.info(TWITTER_LOGIN_INFO_MANAGER + ", check code parse end");
-					        ruuDriverAbort();
-					        
-					        
-				        } else {
-				        	logger.info(TWITTER_LOGIN_INFO_MANAGER + ", Not Found check code, check email, email: "+email );
-				            logger.info(TWITTER_LOGIN_INFO_MANAGER + ", check code parse end");
-				            ruuDriverAbort();
-							return null;
-				        }		
+//						initruuKr();
+//						String ruukrUrl = "https://ruu.kr/"; 
+//	////					
+//						ruuKrDriver.get(ruukrUrl);
+//						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", ruuKrDriver get : " + ruukrUrl);
+//						ThreadUtil.sleepSec(3);
+//						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", email input start");
+//						String ruuKrinputXpath ="/html/body/div[1]/div[1]/div/div[1]/form/input[3]";
+//						WebElement ruuKrinput = ruuKrDriver.findElement(By.xpath(ruuKrinputXpath));
+//						String email1 = email.replaceAll("@.+", "");
+//						ruuKrinput.sendKeys(email1);
+//						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", email input end");
+//						
+//						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", check code parse start");
+//						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", mail context parse...");
+//						String ruuKrmailcheckButtonXpath = "/html/body/div[1]/div[1]/div/div[1]/form/span";
+//						WebElement ruuKrmailcheckButton = ruuKrDriver.findElement(By.xpath(ruuKrmailcheckButtonXpath));
+//						ruuKrmailcheckButton.click();
+//						ThreadUtil.sleepSec(2);
+//						ruuKrmailcheckButton.click();
+//						
+//						String ruuKrMailTextXpath ="/html/body/div[1]/div[1]/div/div[3]";
+//						WebElement ruuKrMailTextX = ruuKrDriver.findElement(By.xpath(ruuKrMailTextXpath));
+//						ThreadUtil.sleepSec(15);
+//						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", mail context parse end");
+//						
+//						// 정규식사용
+//						String pattern = "Your Twitter confirmation code is (\\w+)";
+//				        Pattern regex = Pattern.compile(pattern);
+//				        
+//				        Matcher matcher = regex.matcher(ruuKrMailTextX.getText());
+//				        
+//				        if (matcher.find()) {
+//				            String confirmationCode = matcher.group(1);
+//				            System.out.println("Twitter code: " + confirmationCode);
+//					        String twitterCheckEmailInputXpath ="/html/body/div[1]/div/div/div[1]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/div[1]/div/div[2]/label/div/div[2]/div/input";
+//					        WebElement twitterCheckEmailInput = driver.findElement(By.xpath(twitterCheckEmailInputXpath));
+//					        twitterCheckEmailInput.sendKeys(confirmationCode);
+//					        ThreadUtil.sleepSec(3);
+////					        Actions actions = new Actions(driver);
+//					        
+//					        driverActions_Keys(this.driver, Keys.TAB, 3);
+//					        driverActions_Keys(this.driver, Keys.ENTER, 1);
+//					        ThreadUtil.sleepSec(3);		
+//					        logger.info(TWITTER_LOGIN_INFO_MANAGER + ", check code parse end");
+//					        ruuDriverAbort();
+//					        
+//					        
+//				        } else {
+//				        	logger.info(TWITTER_LOGIN_INFO_MANAGER + ", Not Found check code, check email, email: "+email );
+//				            logger.info(TWITTER_LOGIN_INFO_MANAGER + ", check code parse end");
+//				            ruuDriverAbort();
+//							return null;
+//				        }		
+						service.updateAuthTokenStatusE(email);
+						return null;
 					}
 				
 				} catch (Exception e) {
@@ -634,6 +644,7 @@ public class TwitterLoginInfoManager {
 	        if(driver.getCurrentUrl().equals("https://twitter.com/account/access")) {
 	        	logger.info(TWITTER_LOGIN_INFO_MANAGER + ", Activate Id Access");
 				try {
+		        	service.updateAuthTokenStatusC(email);
 //					driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);	
 //			        // Actions 객체 생성
 //			        Actions actions = new Actions(driver);
@@ -674,11 +685,13 @@ public class TwitterLoginInfoManager {
 					ThreadUtil.sleepSec(3);
 					/* home화면 나오지 않을시 실패로 판단 */
 					if(!driver.getCurrentUrl().contains("https://twitter.com/home")) {
+						service.updateAuthTokenStatusC(email);
 						logger.info(TWITTER_LOGIN_INFO_MANAGER + ", Activate Id Access fail, CAPTHCA Check!!");
 						return null;
 					} 
 					
-				} catch (ElementNotVisibleException e) {
+				} catch (ElementNotInteractableException e) {
+					service.updateAuthTokenStatusC(email);
 					logger.info(TWITTER_LOGIN_INFO_MANAGER + ", CAPTCHA Login PASS or unLockInput Xpatgh Change");
 					return null;
 				} 
@@ -689,6 +702,22 @@ public class TwitterLoginInfoManager {
 			String cookie = null;
 			/* crsfToken 값과 cookie 값 생성후 Map 객체에 담기 */
 			try {
+				// uid값 찾을수 있을지 확인 필요 테스트 - uuid값이 있는 id와 없는 id 존재 그차이 알 수 없음 추후 uid가 필요할때 개발				
+//		        // DevTools 세션 시작
+//		        DevTools devTools = driver.getDevTools();
+//		        devTools.createSession();
+////		        // 네트워크 활동 모니터링 설정
+//		        devTools.send(Network.enable(Optional.empty(), Optional.empty(), Optional.empty()));
+//		        devTools.addListener(Network.requestWillBeSent(), request -> {
+//		            Request req = request.getRequest();
+//		            System.out.println("URL: " + req.getUrl());
+//		            System.out.println("Method: " + req.getMethod());
+//		            System.out.println("Headers: " + req.getHeaders());
+//		        });
+//		        driver.get("https://x.com/search?q=%23CGV&src=trend_click&vertical=trends");
+//		        
+//		        ThreadUtil.sleepSec(999999);
+		        
 				csrfName = driver.manage().getCookieNamed("ct0");
 				cookiesName = driver.manage().getCookieNamed("auth_token");
 				cookie = cookiesName.getName() + "=" + cookiesName.getValue() + ";" + csrfName.getName() + "=" + csrfName.getValue() + ";";
