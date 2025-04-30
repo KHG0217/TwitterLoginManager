@@ -6,10 +6,14 @@
 		<setting name="cacheEnabled" value="false" />
 		<setting name="useGeneratedKeys" value="true" />
 		<setting name="defaultExecutorType" value="REUSE" />	
+		<setting name="mapUnderscoreToCamelCase" value="true"/>
 	</settings>	
 	<typeAliases>		
 		<typeAlias type="com.tapacross.sns.entity.TBTwitterAuthToken"
 		alias="AuthToken" />	
+		
+		<typeAlias type="com.tapacross.sns.crawler.twitter.entity.TBTwitterXCTxidToken"
+		alias="XCTxidToken" />
 	</typeAliases>   
 
 	<mappers>

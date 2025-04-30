@@ -62,8 +62,7 @@ class TestTwitterLoginInfoService {
 			if(loginInfo == null) {
 				continue;
 			}
-			
-			
+						
 			TBTwitterAuthToken entity = new TBTwitterAuthToken()
 			entity.email = data.email;
 			entity.userId = id;
@@ -73,9 +72,12 @@ class TestTwitterLoginInfoService {
 			
 			service.updateTwitterAuthData(entity)
 		}
-
-		
-		
+	}
+	
+	@Test
+	public void testSlectAuthTokenStatus() {
+		def status = 'X'
+		println service.selectAuthTokenStatus(status).size();
 	}
 
 	

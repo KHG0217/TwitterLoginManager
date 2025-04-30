@@ -87,4 +87,28 @@
 		SET USE_DATE = #{useDate}
 		WHERE 1=1 AND USER_ID = #{userId}
 	</update>
+	
+	<insert id= "insertXCTxidToken" parameterType="XCTxidToken">
+		INSERT INTO TB_TWITTER_XCTXID_TOKEN
+		(TOKEN, STATUS, IP)
+		VALUES (
+			#{token},
+			'T',
+			#{ip}
+		)
+	</insert>
+	
+	<select id="selectAuthTokenStatus" parameterType="String" resultType="AuthToken" >
+		SELECT * FROM TB_TWITTER_AUTH_TOKEN
+		WHERE 1=1
+		AND STATUS = #{status}
+	</select>
+	
+	<select id="selectAuthTokenIpAndStatus" parameterType="map" resultType="AuthToken" >
+		SELECT * FROM TB_TWITTER_AUTH_TOKEN
+		WHERE 1=1
+		AND IP = #{ip}
+		AND STATUS = #{status}
+	</select>
+	
 </mapper>

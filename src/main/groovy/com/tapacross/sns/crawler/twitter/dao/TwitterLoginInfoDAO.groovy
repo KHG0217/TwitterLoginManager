@@ -5,7 +5,7 @@ import javax.annotation.Resource
 import org.mybatis.spring.SqlSessionTemplate
 import org.springframework.dao.DataAccessException
 import org.springframework.stereotype.Repository
-
+import com.tapacross.sns.crawler.twitter.entity.TBTwitterXCTxidToken
 import com.tapacross.sns.entity.TBTwitterAuthToken
 
 interface loginInfoDAO {
@@ -20,6 +20,9 @@ interface loginInfoDAO {
 	def void updateAuthToken401 (String id) throws DataAccessException
 	def List<TBTwitterAuthToken> select401TwitterId () throws DataAccessException
 	def void updateAuthTokenUseDateReset (TBTwitterAuthToken entity) throws DataAccessException
+	def void insertXCTxidToken (TBTwitterXCTxidToken entity) throws DataAccessException
+	def List<TBTwitterAuthToken> selectAuthTokenStatus (String status) throws DataAccessException
+	def List<TBTwitterAuthToken> selectAuthTokenIpAndStatus (String ip, String status) throws DataAccessException
 	
 }
 
@@ -92,6 +95,27 @@ class TwitterLoginInfoDAO implements loginInfoDAO  {
 		sqlSessionTemplate.update("sql.resources.twitterloginInfodao.updateAuthTokenUseDateReset", entity)
 		
 		
+	}
+
+	@Override
+	public void insertXCTxidToken(TBTwitterXCTxidToken entity) throws DataAccessException {
+		// TODO Auto-generated method stub
+		sqlSessionTemplate.insert("sql.resources.twitterloginInfodao.insertXCTxidToken", entity)
+	}
+
+	@Override
+	public List<TBTwitterAuthToken> selectAuthTokenStatus(String status) throws DataAccessException {
+		// TODO Auto-generated method stub
+		return sqlSessionTemplate.selectList("sql.resources.twitterloginInfodao.selectAuthTokenStatus", status)
+	}
+
+	@Override
+	public List<TBTwitterAuthToken> selectAuthTokenIpAndStatus(String ip, String status) throws DataAccessException {
+		// TODO Auto-generated method stub
+		Map<String,String> param = new HashMap();
+		param.put("ip", ip);
+		param.put("status", status);
+		return sqlSessionTemplate.selectList("sql.resources.twitterloginInfodao.selectAuthTokenIpAndStatus", param)
 	}
 
 

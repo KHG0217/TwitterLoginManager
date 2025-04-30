@@ -68,7 +68,7 @@ public class TwitterLoginInfoManager {
 	private static List<String> updatefailList = new ArrayList<>();
 	private static int ProxyIpListindex = 0;
 	private static int ProxyIpListSize = 0;	
-	 private final int MAX_RETRY = 5; // 최대 재시도 횟수 https://twitter.com/account/access?lang=en
+	private final int MAX_RETRY = 5; // 최대 재시도 횟수 https://twitter.com/account/access?lang=en
 	
 	 /*
 	  * 트위터 계정을 새로 추가하거나 업데이트한다.
@@ -107,6 +107,7 @@ public class TwitterLoginInfoManager {
 //			Map.Entry<String, Integer> proxyIpInfo = manger.distinguishIpAndProt(ProxyIpListindex);
 //			String proxyIp = proxyIpInfo.getKey();
 //			int port = proxyIpInfo.getValue();
+			number = 2;
 				
 			String date = manger.currentDate();
 			switch (number) {
@@ -183,7 +184,7 @@ public class TwitterLoginInfoManager {
 	private void init (String proxyIp, int port) {
 		try {
 			this.driver = null;
-			if(this.driver == null) { //확인
+			if(this.driver == null) { //인잇
 				ChromeOptions options = new ChromeOptions();
 //		        options.addArguments("--headless"); // 크롬창 숨기기, javascript가 감지가능 
 		        options.addArguments("--use-fake-ui-for-media-stream");
@@ -400,7 +401,7 @@ public class TwitterLoginInfoManager {
 	
 	/*
 	 * 트위터 block된 id를 수동으로 해제후 활성화 시킨다.
-	 * 현재 block 계정 업데이트하는 STATUS 값 : F
+	 * 현재 block 계정 업데이트하는 STATUS 값 : X
 	 *  
 	 * */
 	public void updateTwitterAuthData(String proxyIp, int port) {
@@ -453,8 +454,7 @@ public class TwitterLoginInfoManager {
 			}
 		}catch (Exception e) {
 			e.printStackTrace();
-		}
-				
+		}			
 	}
 	
 	/*
@@ -552,10 +552,14 @@ public class TwitterLoginInfoManager {
 //			actions.sendKeys(Keys.ENTER).perform();
 			logger.info(TWITTER_LOGIN_INFO_MANAGER + ", pwLoginInput Click");		
 			driver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
-			ThreadUtil.sleepSec(3);
+			
+			/*메일인증 페이지*/
+			ThreadUtil.sleepSec(3);// 테스트
 
 			/* email 추가인증 요구시 */
-			if(this.driver.getCurrentUrl().equals("https://x.com/i/flow/login")) {
+			
+//			if(this.driver.getCurrentUrl().equals("https://x.com/i/flow/login")) {
+			if(this.driver.getCurrentUrl().equals("https://x.com/i/flow/login?mx=2")) {
 				try {
 				/* 비밀번호 오류 체크로직 */ 
 //					ThreadUtil.sleepSec(999);
@@ -704,23 +708,28 @@ public class TwitterLoginInfoManager {
 			try {
 				// uid값 찾을수 있을지 확인 필요 테스트 - uuid값이 있는 id와 없는 id 존재 그차이 알 수 없음 추후 uid가 필요할때 개발				
 //		        // DevTools 세션 시작
-//		        DevTools devTools = driver.getDevTools();
-//		        devTools.createSession();
-////		        // 네트워크 활동 모니터링 설정
-//		        devTools.send(Network.enable(Optional.empty(), Optional.empty(), Optional.empty()));
-//		        devTools.addListener(Network.requestWillBeSent(), request -> {
-//		            Request req = request.getRequest();
+		        DevTools devTools = driver.getDevTools();
+		        devTools.createSession();
+//		        // 네트워크 활동 모니터링 설정
+		        devTools.send(Network.enable(Optional.empty(), Optional.empty(), Optional.empty()));
+		        driver.get("https://x.com/search?q=%23bts&src=trend_click&f=live&vertical=trends");
+		        
+		        devTools.addListener(Network.requestWillBeSent(), request -> {
+		            Request req = request.getRequest();
 //		            System.out.println("URL: " + req.getUrl());
 //		            System.out.println("Method: " + req.getMethod());
 //		            System.out.println("Headers: " + req.getHeaders());
-//		        });
-//		        driver.get("https://x.com/search?q=%23CGV&src=trend_click&vertical=trends");
+		            
+		            if(req.getUrl().contains("SearchTimeline?variables=")) {
+		            	System.out.println("Headers: " + req.getHeaders().get("x-client-transaction-id"));
+		            }
+		        });
 //		        
-//		        ThreadUtil.sleepSec(999999);
 		        
 				csrfName = driver.manage().getCookieNamed("ct0");
 				cookiesName = driver.manage().getCookieNamed("auth_token");
 				cookie = cookiesName.getName() + "=" + cookiesName.getValue() + ";" + csrfName.getName() + "=" + csrfName.getValue() + ";";
+		        ThreadUtil.sleepSec(999999); //여기
 			}catch (NullPointerException e) { // 로그인 실패 또는 쿠키필드값 변경시 Exception
 				e.printStackTrace();
 				logger.error(TWITTER_LOGIN_INFO_MANAGER + ", crsfToken or cookie is null crsfToken: " + csrfName.getValue() +
