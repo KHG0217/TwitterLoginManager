@@ -14,7 +14,10 @@ import com.tapacross.sns.entity.TBTwitterAuthToken;
  * 트위터 계정을 새로 추가하거나 업데이트한다.
  * 크롬드라이버 버전 = 114
  * type = 1 : insert
+ * 	 - insert할 계정은 src/main/resources/data/new_twitter_auth.txt에 저장한다
+ *   - 저장 규칙은 insertNewTwitterAuthList 주석 참고
  * type = 2 : update
+ * 	- Status 값 X인 계정을 대상으로 업데이트한다.
  *
  * 현재 프록시는 사용하지 않는다.
  * */
@@ -30,10 +33,13 @@ public class TwitterLoginInfoManager {
 		TwitterLoginInfoManager manger = new TwitterLoginInfoManager();
 
 		try {
+			if(args.length != 1) {
+				System.out.println("args error, put args 1 or 2, 1: insert, 2: update");
+				System.exit(-1);
+			}
+
+			int number = Integer.parseInt(args[0]);
 			manger.logger.info("type select, 1: insert, 2: update, :");
-			Scanner scanner = new Scanner(System.in);
-			int number = scanner.nextInt();
-			scanner.close();
 
 			TwitterMangerUtil util = new TwitterMangerUtil();
 			util.initSpringBeans();

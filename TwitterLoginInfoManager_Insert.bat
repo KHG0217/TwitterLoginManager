@@ -1,6 +1,10 @@
 @echo off
 setlocal enabledelayedexpansion
 
+if not exist "twitter_insert" (
+    mkdir "twitter_insert"
+)
+
 for /f %%a in ('wmic os get localdatetime ^| find "."') do set datetime=%%a
 set "year=!datetime:~0,4!"
 set "month=!datetime:~4,2!"
