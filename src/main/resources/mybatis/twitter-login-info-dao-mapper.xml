@@ -90,9 +90,11 @@
 	
 	<insert id= "insertXCTxidToken" parameterType="XCTxidToken">
 		INSERT INTO TB_TWITTER_XCTXID_TOKEN
-		(TOKEN, STATUS, IP)
+		(TOKEN , CRAWL_DATE, USE_DATE , STATUS, IP)
 		VALUES (
 			#{token},
+			sysdate,
+			sysdate,
 			'T',
 			#{ip}
 		)

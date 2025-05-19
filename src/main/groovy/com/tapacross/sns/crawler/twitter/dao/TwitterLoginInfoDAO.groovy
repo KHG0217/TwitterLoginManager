@@ -1,12 +1,12 @@
 package com.tapacross.sns.crawler.twitter.dao
 
-import javax.annotation.Resource
-
 import org.mybatis.spring.SqlSessionTemplate
 import org.springframework.dao.DataAccessException
 import org.springframework.stereotype.Repository
 import com.tapacross.sns.crawler.twitter.entity.TBTwitterXCTxidToken
 import com.tapacross.sns.entity.TBTwitterAuthToken
+
+import javax.annotation.Resource
 
 interface loginInfoDAO {
 	def String selectExistTwitterId(String email) throws DataAccessException
